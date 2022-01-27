@@ -95,13 +95,19 @@
 #   }
 , rev ? "b165ce0c4efbb74246714b5c66b6bcdce8cde175"
 
+# Providing a sha256 hash for nixpkgs is necessary in pure evaluation mode
+, sha256 ? null
+
 , pkgs ?
     if builtins.compareVersions builtins.nixVersion "2.0" > 0
       then
         if ((rev == "") || (rev == "default") || (rev == "local"))
           then import <nixpkgs> {}
           # Do not guard with hash, so the project is able to use current channels (rolling `rev`) of Nixpkgs
-          else import (builtins.fetchTarball "https://github.com/NixOS/nixpkgs/archive/${rev}.tar.gz") {}
+          else import (builtins.fetchTarball {
+            url = "https://github.com/NixOS/nixpkgs/archive/${rev}.tar.gz";
+            ${if sha256 == null then null else "sha256"} = sha256;
+          }) {}
         // {
           # Try to build dependencies even if they are marked broken.
           config.allowBroken = true;
